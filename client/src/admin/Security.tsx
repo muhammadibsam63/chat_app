@@ -3,6 +3,7 @@ import { KeyRound, Plus, ShieldCheck, Trash2, UserX } from 'lucide-react';
 import { api, ApiClientError } from '../lib/api';
 import { formatDate, useQuery } from '../lib/hooks';
 import type { AdminUser } from '../lib/types';
+import { useAuth } from './AuthContext';
 
 interface SessionRecord {
   id: string;
@@ -30,7 +31,7 @@ const inputClass =
   'w-full rounded-xl border border-white/10 bg-[#0b0f16] px-3 py-2 text-sm text-white placeholder:text-white/25 focus:border-[#f5c542]/60 focus:outline-none';
 
 export default function SecurityPanel() {
-  const { user } = useAuthSafe();
+  const { user } = useAuth();
   const sessions = useQuery<SessionRecord[]>('/auth/sessions');
   const users = useQuery<AdminUser[]>('/admin/users');
   const roles = useQuery<RoleRecord[]>('/admin/roles');
@@ -327,12 +328,3 @@ export default function SecurityPanel() {
   );
 }
 
-/** Local re-export so this panel does not import the shell (circular import). */
-function useAuthSafe(): { user: AdminUser | null } {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    return require('./AuthContext').useAuth() as { user: AdminUser | null };
-  } catch {
-    return { user: null };
-  }
-}
