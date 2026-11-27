@@ -15,7 +15,7 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./client/src', import.meta.url)) },
   },
   build: {
-    outDir: '../dist/client',
+    outDir: 'dist',
     emptyOutDir: true,
     sourcemap: false,
     chunkSizeWarningLimit: 1200,
