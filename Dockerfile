@@ -1,5 +1,6 @@
 FROM node:26-alpine AS build
-RUN apk upgrade --no-cache
+# better-sqlite3 compiles a native addon; Alpine images ship no toolchain.
+RUN apk upgrade --no-cache && apk add --no-cache python3 make g++
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
