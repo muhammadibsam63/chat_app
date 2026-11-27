@@ -216,9 +216,9 @@ adminRouter.get(
     assertPermission(req, 'dashboard:read');
     const rows = db
       .prepare(
-        `SELECT u.id, u.email, u.name, u.role, u.avatar_url, u.is_active, u.last_login_at, u.created_at,
+        `SELECT u.id, u.email, u.name, r.name AS role, u.avatar_url, u.is_active, u.last_login_at, u.created_at,
                 r.label AS role_label
-         FROM users u LEFT JOIN roles r ON r.name = u.role ORDER BY u.created_at ASC`,
+         FROM users u LEFT JOIN roles r ON r.id = u.role_id ORDER BY u.created_at ASC`,
       )
       .all() as Array<Record<string, unknown>>;
     return ok(
@@ -237,20 +237,22 @@ adminRouter.post(
         email: z.string().trim().toLowerCase().email(),
         name: z.string().trim().min(2).max(80),
         password: z.string().min(10).max(200),
-        role: z.enum(['admin', 'editor', 'viewer']),
+        role: z.string().trim().min(2).max(40),
       })
       .safeParse(req.body);
     if (!parsed.success) return fail(res, 422, 'Invalid user payload', parsed.error.issues);
     const exists = db.prepare('SELECT id FROM users WHERE email = ?').get(parsed.data.email);
     if (exists) return fail(res, 409, 'A user with that email already exists');
+    const roleId = roleIdByName(parsed.data.role);
+    if (!roleId) return fail(res, 422, 'Unknown role');
     const id = crypto.randomUUID();
     db.prepare(
-      `INSERT INTO users (id, email, name, password_hash, role, is_active) VALUES (?, ?, ?, ?, ?, 1)`,
-    ).run(id, parsed.data.email, parsed.data.name, await hashPassword(parsed.data.password), parsed.data.role);
+      `INSERT INTO users (id, email, name, password_hash, role_id, is_active) VALUES (?, ?, ?, ?, ?, 1)`,
+    ).run(id, parsed.data.email, parsed.data.name, await hashPassword(parsed.data.password), roleId);
     logActivity({ req, action: 'user.created', entity: 'user', entityId: id, meta: { role: parsed.data.role } });
     return ok(
       res,
-      { id, email: parsed.data.email, name: parsed.data.name, role: parsed.data.role },
+      { id, email: parsed.data.email, name: parsed.data.name, role: parsed.data.role.toUpperCase() },
       undefined,
       201,
     );
@@ -264,18 +266,20 @@ adminRouter.patch(
     const parsed = z
       .object({
         name: z.string().trim().min(2).max(80).optional(),
-        role: z.enum(['admin', 'editor', 'viewer']).optional(),
+        role: z.string().trim().min(2).max(40).optional(),
         isActive: z.boolean().optional(),
         password: z.string().min(10).max(200).optional(),
       })
       .safeParse(req.body);
     if (!parsed.success) return fail(res, 422, 'Invalid user payload', parsed.error.issues);
     const target = db.prepare('SELECT * FROM users WHERE id = ?').get(String(req.params.id)) as
-      | { id: string; role: string }
+      | { id: string; role_id: number }
       | undefined;
     if (!target) return fail(res, 404, 'User not found');
-    if (target.id === req.user!.id && parsed.data.role && parsed.data.role !== 'admin') {
-      return fail(res, 422, 'You cannot remove your own administrator role');
+    const nextRoleId = parsed.data.role ? roleIdByName(parsed.data.role) : undefined;
+    if (parsed.data.role && !nextRoleId) return fail(res, 422, 'Unknown role');
+    if (target.id === req.user!.id && nextRoleId && nextRoleId !== target.role_id) {
+      return fail(res, 422, 'You cannot change your own administrator role');
     }
     const updates: string[] = [];
     const params: unknown[] = [];
@@ -283,9 +287,9 @@ adminRouter.patch(
       updates.push('name = ?');
       params.push(parsed.data.name);
     }
-    if (parsed.data.role) {
-      updates.push('role = ?');
-      params.push(parsed.data.role);
+    if (nextRoleId) {
+      updates.push('role_id = ?');
+      params.push(nextRoleId);
     }
     if (parsed.data.isActive !== undefined) {
       updates.push('is_active = ?');
@@ -320,6 +324,13 @@ adminRouter.delete(
 
 /* ── Generic content CRUD ──────────────────────────────────────── */
 
+function roleIdByName(name: string): number | undefined {
+  const row = db.prepare('SELECT id FROM roles WHERE name = ? COLLATE NOCASE').get(name.trim()) as
+    | { id: number }
+    | undefined;
+  return row?.id;
+}
+
 function listPermission(resource: ResourceDef): string {
   if (resource.table === 'contact_messages') return 'messages:read';
   return resource.permission;
@@ -340,7 +351,7 @@ adminRouter.get(
     if (q && resource.searchable.length > 0) {
       const clauses = resource.searchable
         .filter((field) => columns.includes(field))
-        .map((field) => `${field} LIKE ? ESCAPE "\\"`);
+        .map((field) => `${field} LIKE ? ESCAPE '\\'`);
       if (clauses.length) {
         where.push(`(${clauses.join(' OR ')})`);
         for (let i = 0; i < clauses.length; i += 1) params.push(`%${escapeLike(q)}%`);
