@@ -969,3 +969,291 @@ main#main { padding-top: 78px; min-height: 60vh; }
   }
   [data-reveal].is-in { animation: none; }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   OMEGA — scene hosts, technology panel and digital lab
+   ════════════════════════════════════════════════════════════════ */
+
+.scene-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: pan-y;
+}
+
+.scene-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 214, 0, 0.07), transparent 62%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 44px);
+  border: 1px solid var(--border);
+}
+
+.hero-fallback {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 214, 0, 0.1), transparent 68%);
+}
+.hero-fallback::before,
+.hero-fallback::after {
+  content: '';
+  position: absolute;
+  inset: 18%;
+  border: 1px solid rgba(255, 214, 0, 0.26);
+  border-radius: 50%;
+}
+.hero-fallback::after {
+  inset: 32%;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Technology panel */
+.tech-meta {
+  display: grid;
+  gap: 0.7rem;
+  margin: 1.1rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.tech-meta dt {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tech-meta dd {
+  margin: 0.2rem 0 0;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.chip--active {
+  border-color: rgba(255, 214, 0, 0.55);
+  color: var(--yellow);
+  background: rgba(255, 214, 0, 0.09);
+}
+
+.search-field {
+  display: block;
+  min-width: min(280px, 100%);
+  flex: 1 1 240px;
+}
+
+.universe-legend-item {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+}
+.universe-legend-item:hover,
+.universe-legend-item:focus-visible {
+  color: var(--yellow);
+}
+
+/* Detail page furniture */
+.detail-block {
+  margin-bottom: clamp(2rem, 5vw, 3.5rem);
+  max-width: 68ch;
+}
+.detail-block p {
+  color: var(--muted);
+  line-height: 1.75;
+}
+.detail-block h2 {
+  margin-bottom: 0.9rem;
+}
+
+/* ── Digital lab ─────────────────────────────────────────────────── */
+.lab-page { padding-bottom: clamp(4rem, 9vw, 7rem); }
+
+.lab-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
+  gap: clamp(1.2rem, 2.5vw, 2rem);
+}
+
+.lab-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0.006));
+  overflow: hidden;
+}
+
+.lab-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.2rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+.lab-card-head h2 {
+  margin: 0.15rem 0 0;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+}
+.lab-index {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: var(--gold);
+}
+
+.lab-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.lab-reset:hover,
+.lab-reset:focus-visible {
+  color: var(--yellow);
+  border-color: rgba(255, 214, 0, 0.4);
+}
+
+.lab-canvas {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: radial-gradient(circle at 50% 45%, #101010, #050505 72%);
+}
+
+.lab-controls {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.1rem 1.2rem 1.3rem;
+  border-top: 1px solid var(--border);
+}
+
+.lab-control {
+  display: grid;
+  gap: 0.35rem;
+}
+.lab-control-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.lab-control-head output {
+  color: var(--yellow);
+}
+
+.lab-control input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.16);
+  outline: none;
+  cursor: pointer;
+}
+.lab-control input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--yellow);
+  box-shadow: 0 0 0 3px rgba(255, 214, 0, 0.16);
+}
+.lab-control input[type='range']::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--yellow);
+}
+
+.lab-segment {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.lab-segment button {
+  padding: 0.32rem 0.62rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.lab-segment button[aria-pressed='true'] {
+  color: var(--yellow);
+  border-color: rgba(255, 214, 0, 0.5);
+  background: rgba(255, 214, 0, 0.08);
+}
+
+.lab-motion {
+  padding: 1.2rem;
+  border-top: 1px solid var(--border);
+}
+.lab-motion-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+/* CSS depth studio */
+.lab-css-stage {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  display: grid;
+  place-items: center;
+  perspective: 900px;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 50%, #101010, #050505 70%);
+}
+.lab-css-stack {
+  position: relative;
+  transform-style: preserve-3d;
+}
+.lab-css-layer {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 214, 0, 0.32);
+  background: linear-gradient(145deg, rgba(255, 214, 0, 0.08), rgba(255, 255, 255, 0.012));
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s ease;
+}
+
+@media (max-width: 860px) {
+  .lab-grid { grid-template-columns: 1fr; }
+  .lab-canvas { aspect-ratio: 4 / 3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-css-layer { transition: none; }
+}
