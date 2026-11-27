@@ -1,0 +1,45 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# build output
+dist/
+server/dist/
+client/dist/
+*.tsbuildinfo
+
+# runtime data (database, uploads, logs)
+data/
+server/data/
+uploads/
+server/uploads/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+logs/
+*.log
+
+# environment / secrets
+.env
+.env.*
+!.env.example
+
+# test + tooling caches
+coverage/
+.vitest/
+.vite/
+playwright-report/
+test-results/
+
+# editors / os
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# archives
+*.zip
