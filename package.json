@@ -16,6 +16,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "package": "bash scripts/package.sh",
     "seed:admin": "tsx server/src/scripts/seed-admin.ts",
     "db:reset": "node -e \"require('node:fs').rmSync('data',{recursive:true,force:true})\" && echo 'Runtime data removed; restart the server to re-migrate.'"
   },
