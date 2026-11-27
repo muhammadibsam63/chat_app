@@ -134,8 +134,8 @@ describe('authentication & authorization', () => {
 
   it('enforces role permissions for read-only accounts', async () => {
     const viewer = { name: 'Read Only', email: 'viewer@ibsam.test', password: 'An0ther!Passw0rd#2026' };
-    const createdUser = await asAdmin(request(server).post('/api/admin/users')).send({ ...viewer, role: 'VIEWER' });
-    expect([200, 201]).toContain(createdUser.status);
+    const createdUser = await asAdmin(request(server).post('/api/admin/users')).send({ ...viewer, role: 'viewer' });
+    expect(createdUser.status).toBe(201);
 
     const login = await request(server).post('/api/auth/login').send({ email: viewer.email, password: viewer.password });
     expect(login.status).toBe(200);
