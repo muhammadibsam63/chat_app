@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Link, NavLink, Route, Routes } from 'react-router-dom';
+import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Award,
+  BarChart3,
   Bell,
   Briefcase,
   ExternalLink,
@@ -34,6 +35,7 @@ import Messages from './Messages';
 import MediaLibrary from './Media';
 import SettingsPanel from './Settings';
 import SecurityPanel from './Security';
+import AnalyticsPanel from './Analytics';
 
 const CONTENT_LINKS = [
   { resource: 'projects', label: 'Projects', icon: FolderKanban },
@@ -47,8 +49,18 @@ const CONTENT_LINKS = [
   { resource: 'testimonials', label: 'Testimonials', icon: Quote },
 ];
 
+const SECTION_LABELS: Record<string, string> = {
+  admin: 'Overview',
+  content: 'Content',
+  messages: 'Inbox',
+  media: 'Media vault',
+  analytics: 'Analytics',
+  settings: 'Settings',
+  security: 'Security',
+};
+
 const fieldClass =
-  'w-full rounded-xl border border-white/10 bg-[#0b0f16] px-3.5 py-2.5 text-sm text-white placeholder:text-white/25 focus:border-[#f5c542]/60 focus:outline-none';
+  'w-full rounded-xl border border-white/10 bg-[#0b0b0b] px-3.5 py-2.5 text-sm text-white placeholder:text-white/25 focus:border-[#ffd600]/60 focus:outline-none';
 
 function BootScreen({ label }: { label: string }) {
   return (
@@ -105,7 +117,7 @@ function LoginScreen() {
   return (
     <AuthShell title="Console access" subtitle="Authenticate to manage the IBSAM® ecosystem.">
       {needsSetup && (
-        <div className="mb-5 rounded-xl border border-[#f5c542]/30 bg-[#f5c542]/10 px-4 py-3 text-xs text-[#f5c542]">
+        <div className="mb-5 rounded-xl border border-[#ffd600]/30 bg-[#ffd600]/10 px-4 py-3 text-xs text-[#ffd600]">
           No administrator exists yet. Start with first-run setup.
         </div>
       )}
@@ -238,15 +250,24 @@ function AdminShell() {
   const { user, logout } = useAuth();
   const { connected, pulse } = useRealtime();
   const [open, setOpen] = useState(false);
+  const location = useLocation();
   const notifications = useQuery<Array<{ is_read: number }>>('/admin/notifications', [pulse]);
   const unread = (notifications.data ?? []).filter((item) => !item.is_read).length;
 
+  const segments = location.pathname.split('/').filter(Boolean);
+  const leaf = segments[segments.length - 1] ?? 'admin';
+  const crumb =
+    CONTENT_LINKS.find((item) => item.resource === leaf)?.label ??
+    SECTION_LABELS[leaf] ??
+    leaf.replace(/-/g, ' ');
+
   useEffect(() => {
     setOpen(false);
-  }, [user?.id]);
+  }, [user?.id, location.pathname]);
 
   return (
     <div className="admin-shell">
+      <a className="admin-skip" href="#admin-main">Skip to content</a>
       <aside className={`admin-side${open ? ' is-open' : ''}`}>
         <div className="admin-side-head">
           <Link to="/admin" className="admin-brand">
@@ -278,11 +299,18 @@ function AdminShell() {
           <NavLink to="/admin/media" className={({ isActive }) => `admin-nav-link${isActive ? ' is-active' : ''}`}>
             <ImageIcon size={15} /> Media
           </NavLink>
-          <NavLink to="/admin/settings" className={({ isActive }) => `admin-nav-link${isActive ? ' is-active' : ''}`}>
-            <SettingsIcon size={15} /> Settings
+
+          <p className="admin-nav-label">Insights</p>
+          <NavLink to="/admin/analytics" className={({ isActive }) => `admin-nav-link${isActive ? ' is-active' : ''}`}>
+            <BarChart3 size={15} /> Analytics
           </NavLink>
           <NavLink to="/admin/security" className={({ isActive }) => `admin-nav-link${isActive ? ' is-active' : ''}`}>
             <ShieldCheck size={15} /> Security
+          </NavLink>
+
+          <p className="admin-nav-label">System</p>
+          <NavLink to="/admin/settings" className={({ isActive }) => `admin-nav-link${isActive ? ' is-active' : ''}`}>
+            <SettingsIcon size={15} /> Settings
           </NavLink>
         </nav>
 
@@ -307,6 +335,11 @@ function AdminShell() {
           <button type="button" className="admin-icon-btn admin-menu" onClick={() => setOpen((value) => !value)} aria-label="Toggle navigation">
             <Menu size={16} />
           </button>
+          <nav className="admin-crumb" aria-label="Breadcrumb">
+            <span>IBSAM®</span>
+            <i>/</i>
+            <strong>{crumb}</strong>
+          </nav>
           <div className={`admin-live${connected ? ' is-live' : ''}`}>
             <span /> {connected ? 'Live' : 'Offline'}
           </div>
@@ -321,12 +354,13 @@ function AdminShell() {
           </div>
         </header>
 
-        <main className="admin-content">
+        <main className="admin-content" id="admin-main" tabIndex={-1}>
           <Routes>
             <Route index element={<Overview />} />
             <Route path="content/:resource" element={<ContentManager />} />
             <Route path="messages" element={<Messages />} />
             <Route path="media" element={<MediaLibrary />} />
+            <Route path="analytics" element={<AnalyticsPanel />} />
             <Route path="settings" element={<SettingsPanel />} />
             <Route path="security" element={<SecurityPanel />} />
             <Route path="*" element={<p className="admin-empty">That console section does not exist.</p>} />

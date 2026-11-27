@@ -22,7 +22,22 @@ export default function Overview() {
   const { pulse } = useRealtime();
   const { data, loading, error } = useQuery<AdminOverview>('/admin/overview', [pulse]);
 
-  if (loading && !data) return <p className="admin-empty">Loading dashboard…</p>;
+  if (loading && !data) {
+    return (
+      <div className="admin-page" aria-busy="true" aria-label="Loading dashboard">
+        <div className="admin-skel admin-skel--title" />
+        <div className="admin-metrics">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="admin-skel admin-skel--metric" />
+          ))}
+        </div>
+        <div className="admin-columns">
+          <div className="admin-skel admin-skel--block" />
+          <div className="admin-skel admin-skel--block" />
+        </div>
+      </div>
+    );
+  }
   if (error) return <p className="admin-empty admin-empty--error">{error}</p>;
   if (!data) return <p className="admin-empty">No dashboard data available.</p>;
 
@@ -113,7 +128,7 @@ export default function Overview() {
             <h2>
               <Radio size={15} /> Traffic
             </h2>
-            <span className="admin-muted">Last 7 / 30 days</span>
+            <Link to="/admin/analytics">Open analytics</Link>
           </div>
           <div className="admin-stat-row">
             <div>
