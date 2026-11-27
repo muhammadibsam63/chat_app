@@ -1,199 +1,218 @@
-import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowUpRight } from 'lucide-react';
-import { GithubIcon } from '../components/BrandIcons';
-import { queryString } from '../lib/api';
+import { useCallback, useMemo, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowUpRight, Github, Radio } from 'lucide-react';
+import SceneCanvas from '../components/SceneCanvas';
+import { Badge, Button, EmptyState, Eyebrow, Loading, PageHeader, Reveal, Tag } from '../components/ui';
 import { useDocumentMeta, useQuery } from '../lib/hooks';
-import { useSite } from '../lib/site';
 import type { CaseStudy, Project } from '../lib/types';
-import {
-  ArrowLink,
-  Badge,
-  Button,
-  EmptyState,
-  ErrorState,
-  Eyebrow,
-  PageHeader,
-  Reveal,
-  Skeleton,
-  Tag,
-} from '../components/ui';
+import { createProjectUniverse, type UniverseNode } from '../three/scenes';
+import type { SceneContext, SceneInstance } from '../three/engine';
 
-function paragraphs(text: string): string[] {
-  return text.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean);
+function asProjects(value: unknown): Project[] {
+  if (Array.isArray(value)) return value as Project[];
+  const record = value as { projects?: Project[]; rows?: Project[] } | null;
+  return record?.projects ?? record?.rows ?? [];
 }
 
-function ProjectCard({ project, index }: { project: Project; index: number }) {
-  return (
-    <Reveal delay={index * 60}>
-      <article className="surface surface-hover project-card">
-        <Link to={`/work/${project.slug}`} className="project-card-media" aria-label={project.title}>
-          {project.gallery?.[0] ? (
-            <img src={project.gallery[0]} alt={`${project.title} preview`} loading="lazy" />
-          ) : (
-            <span className="project-card-glyph">{project.title.slice(0, 1)}</span>
-          )}
-        </Link>
-        <div className="project-card-body">
-          <div className="project-card-top">
-            <span className="project-index">{String(index + 1).padStart(2, '0')}</span>
-            <span className="badge badge--muted">{project.category}</span>
-          </div>
-          <h3 className="project-title">
-            <Link to={`/work/${project.slug}`}>{project.title}</Link>
-          </h3>
-          <p className="project-summary">{project.summary}</p>
-          <div className="tag-row">
-            {(project.technologies ?? []).slice(0, 4).map((tech) => (
-              <Tag key={tech}>{tech}</Tag>
-            ))}
-          </div>
-          <div className="card-links">
-            <ArrowLink to={`/work/${project.slug}`}>Read the build</ArrowLink>
-            {project.live_url ? (
-              <a href={project.live_url} target="_blank" rel="noreferrer noopener">
-                <ArrowUpRight size={14} aria-hidden /> Live
-              </a>
-            ) : null}
-          </div>
-        </div>
-      </article>
-    </Reveal>
-  );
-}
+const pad = (value: number): string => String(value).padStart(2, '0');
+
+/* ── Project index ─────────────────────────────────────────────────── */
 
 export function ProjectList() {
-  const { settings } = useSite();
-  const [search, setSearch] = useState('');
-  const [debounced, setDebounced] = useState('');
+  const navigate = useNavigate();
+  const { data, loading, error } = useQuery<unknown>('/projects');
+  const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
+  const [showUniverse, setShowUniverse] = useState(true);
 
   useDocumentMeta({
-    title: 'Work — Projects & Systems',
-    description: 'Selected full-stack projects by Muhammad Ibsam, spanning Web3 applications, product dashboards and interface engineering.',
+    title: 'Work — Projects & Case Studies',
+    description:
+      'Nine documented projects by Muhammad Ibsam across full-stack engineering, interactive 3D and e-commerce.',
   });
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => setDebounced(search.trim()), 300);
-    return () => window.clearTimeout(timer);
-  }, [search]);
+  const projects = asProjects(data);
 
-  const path = `/projects${queryString({
-    q: debounced || undefined,
-    category: category === 'All' ? undefined : category,
-  })}`;
-  const { data, meta, loading, error, reload } = useQuery<Project[]>(path, [path]);
+  const categories = useMemo(() => {
+    const unique = new Set(projects.map((project) => project.category).filter(Boolean));
+    return ['All', ...Array.from(unique)];
+  }, [projects]);
 
-  const categories = Array.isArray(meta.categories) ? (meta.categories as string[]) : [];
-  const projects = data ?? [];
+  const filtered = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return projects.filter((project) => {
+      const matchesCategory = category === 'All' || project.category === category;
+      if (!matchesCategory) return false;
+      if (!needle) return true;
+      const haystack = [project.title, project.subtitle, project.summary, ...(project.technologies ?? [])]
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(needle);
+    });
+  }, [projects, category, query]);
+
+  const nodes = useMemo<UniverseNode[]>(
+    () => projects.map((project, index) => ({ slug: project.slug, title: project.title, index: pad(index + 1) })),
+    [projects],
+  );
+
+  const factory = useCallback(
+    (ctx: SceneContext): SceneInstance => createProjectUniverse(ctx, nodes),
+    [nodes],
+  );
 
   return (
     <>
       <PageHeader
-        eyebrow="Work"
-        title="Built, shipped, documented."
-        lede={`${settings.profile.name.split(' ')[0]} builds full-stack products where interface craft and system design meet. Each project below is documented with the constraints it was built against.`}
+        eyebrow="Work · 01 — 09"
+        title={
+          <>
+            Nine projects, <span className="outline-text">documented properly.</span>
+          </>
+        }
+        lede="Each entry states what the project is, what it is built with, and what actually works today. Filter, search, or open the 3D universe and click a node."
       />
 
-      <section className="shell" style={{ paddingBottom: 'clamp(3rem, 6vw, 5rem)' }}>
-        <div className="filter-bar">
-          <div className="chip-row" role="group" aria-label="Filter by category">
+      <section className="section">
+        <div className="shell">
+          <div className="filter-bar">
+            <div className="chip-row" role="group" aria-label="Filter by category">
+              {categories.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={`chip${category === option ? ' chip--active' : ''}`}
+                  aria-pressed={category === option}
+                  onClick={() => setCategory(option)}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+            <label className="search-field">
+              <span className="sr-only">Search projects</span>
+              <input
+                className="input search-input"
+                type="search"
+                placeholder="Search projects or technologies"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+              />
+            </label>
             <button
               type="button"
-              className={`chip ${category === 'All' ? 'is-active' : ''}`}
-              aria-pressed={category === 'All'}
-              onClick={() => setCategory('All')}
+              className={`chip${showUniverse ? ' chip--active' : ''}`}
+              aria-pressed={showUniverse}
+              onClick={() => setShowUniverse((value) => !value)}
             >
-              All
+              <Radio size={13} aria-hidden /> 3D universe
             </button>
-            {categories.map((item) => (
-              <button
-                key={item}
-                type="button"
-                className={`chip ${category === item ? 'is-active' : ''}`}
-                aria-pressed={category === item}
-                onClick={() => setCategory(item)}
-              >
-                {item}
-              </button>
-            ))}
           </div>
-          <input
-            type="search"
-            className="input search-input"
-            placeholder="Search projects…"
-            aria-label="Search projects"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </div>
 
-        {loading ? (
-          <div className="work-grid">
-            <div className="surface" style={{ padding: '1.5rem' }}><Skeleton lines={5} /></div>
-            <div className="surface" style={{ padding: '1.5rem' }}><Skeleton lines={5} /></div>
-          </div>
-        ) : error ? (
-          <ErrorState message={error} onRetry={reload} />
-        ) : projects.length === 0 ? (
-          <EmptyState
-            title="No projects match that filter"
-            description="Try a different category or clear the search to see the full catalogue."
-            action={
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSearch('');
-                  setCategory('All');
-                }}
-              >
-                Reset filters
-              </Button>
-            }
-          />
-        ) : (
-          <div className="work-grid">
-            {projects.map((project, index) => (
-              <ProjectCard key={project.id} project={project} index={index} />
-            ))}
-          </div>
-        )}
+          {showUniverse && nodes.length ? (
+            <div className="universe">
+              <div className="universe-canvas">
+                <SceneCanvas
+                  factory={factory}
+                  label="Interactive three-dimensional map of the nine projects"
+                  onClick={(index) => {
+                    const target = projects[index];
+                    if (target) navigate(`/work/${target.slug}`);
+                  }}
+                  fallback={<div className="scene-fallback">Project universe</div>}
+                />
+                <p className="universe-hint">
+                  Drag to orbit · click a node to open its case study · the list below works without WebGL
+                </p>
+              </div>
+              <div className="universe-legend">
+                {nodes.map((node, index) => (
+                  <Link key={node.slug} to={`/work/${node.slug}`} className="universe-legend-item">
+                    <span className="mono">{node.index}</span>
+                    {node.title}
+                    {filtered.includes(projects[index]) ? null : <span className="muted"> · filtered out</span>}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {loading ? <Loading label="Loading projects" /> : null}
+          {error ? <EmptyState title="Could not load projects" body={error.message} /> : null}
+
+          {!loading && !error ? (
+            filtered.length ? (
+              <div className="work-editorial">
+                {filtered.map((project, index) => (
+                  <Reveal as="article" key={project.id} delay={index * 40}>
+                    <Link
+                      to={`/work/${project.slug}`}
+                      className={`project-row${index % 2 ? ' project-row--flip' : ''}`}
+                    >
+                      <div className="project-row-media" aria-hidden>
+                        {project.gallery?.[0] ? (
+                          <img src={project.gallery[0]} alt="" loading="lazy" />
+                        ) : (
+                          <span className="project-glyph">{project.title.slice(0, 2).toUpperCase()}</span>
+                        )}
+                      </div>
+                      <div className="project-row-body">
+                        <span className="project-row-index">{pad(index + 1)}</span>
+                        <h2 className="project-row-title">{project.title}</h2>
+                        <p className="project-row-sub">{project.subtitle || project.category}</p>
+                        <p className="project-row-summary">{project.summary}</p>
+                        <div className="tag-row">
+                          {(project.technologies ?? []).slice(0, 5).map((tech) => (
+                            <Tag key={tech}>{tech}</Tag>
+                          ))}
+                        </div>
+                        <div className="project-row-foot">
+                          <Badge>{project.category}</Badge>
+                          <span className="mono">{project.year}</span>
+                          <span className="arrow-link">
+                            Case study <ArrowUpRight size={15} aria-hidden />
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  </Reveal>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title="No projects match that search"
+                body="Try a different technology or clear the filters to see everything."
+              />
+            )
+          ) : null}
+        </div>
       </section>
     </>
   );
 }
 
-interface ProjectPayload {
-  project: Project;
-  caseStudy: CaseStudy | null;
-  related: Project[];
-}
+/* ── Project detail ────────────────────────────────────────────────── */
+
+type DetailPayload = { project: Project; caseStudy: CaseStudy | null; related: Project[] };
 
 export function ProjectDetail() {
   const { slug } = useParams<{ slug: string }>();
-  const { data, loading, error, reload } = useQuery<ProjectPayload>(slug ? `/projects/${slug}` : null, [slug]);
+  const { data, loading, error } = useQuery<DetailPayload>(`/projects/${slug ?? 'missing'}`);
 
   useDocumentMeta({
-    title: data ? `${data.project.title} — Case Study` : 'Project',
-    description: data?.project.seo_description || data?.project.summary,
-    image: data?.project.gallery?.[0],
-    type: 'article',
+    title: data?.project ? `${data.project.title} — Case Study` : 'Case Study',
+    description: data?.project?.summary ?? 'A documented project by Muhammad Ibsam.',
   });
 
-  if (loading) {
+  if (loading) return <Loading label="Loading case study" />;
+  if (error || !data?.project) {
     return (
-      <section className="shell" style={{ paddingBlock: '4rem' }}>
-        <Skeleton lines={8} />
-      </section>
-    );
-  }
-
-  if (error || !data) {
-    return (
-      <section className="shell" style={{ paddingBlock: '4rem' }}>
-        <ErrorState message={error ?? 'This project could not be found.'} onRetry={reload} />
-        <div style={{ marginTop: '1.5rem' }}>
-          <ArrowLink to="/work">Back to all work</ArrowLink>
+      <section className="section">
+        <div className="shell">
+          <EmptyState title="Case study not found" body="This project may have been renamed or unpublished." />
+          <Button to="/work" variant="outline">
+            Back to all work
+          </Button>
         </div>
       </section>
     );
@@ -203,227 +222,186 @@ export function ProjectDetail() {
 
   return (
     <>
-      <header className="page-header">
-        <div className="shell">
-          <Link to="/work" className="arrow-link" style={{ marginBottom: '1.2rem' }}>
-            <ArrowLeft size={14} aria-hidden /> All work
-          </Link>
-          <Eyebrow>
-            {project.category} · {project.year || 'Undated'}
-          </Eyebrow>
-          <h1 className="display-1">{project.title}</h1>
-          <p className="lede lede--wide">{project.subtitle || project.summary}</p>
-          <div className="hero-actions" style={{ marginTop: '1.6rem' }}>
-            {project.live_url ? (
-              <Button href={project.live_url} icon={<ArrowUpRight size={15} aria-hidden />}>
-                View live product
-              </Button>
-            ) : null}
-            {project.github_url ? (
-              <Button href={project.github_url} variant="outline">
-                <GithubIcon size={15} /> Source code
-              </Button>
-            ) : null}
-          </div>
-        </div>
-      </header>
-
-      <section className="shell" style={{ paddingBottom: 'clamp(3rem, 6vw, 5rem)' }}>
-        {project.gallery?.[0] ? (
-          <div className="article-cover">
-            <img src={project.gallery[0]} alt={`${project.title} interface`} loading="lazy" />
-          </div>
-        ) : null}
-
-        <div className="detail-layout">
-          <div>
-            <dl className="detail-meta">
-              <div>
-                <dt>Role</dt>
-                <dd>{project.role || 'Design & engineering'}</dd>
-              </div>
-              <div>
-                <dt>Timeline</dt>
-                <dd>{project.duration || project.year || '—'}</dd>
-              </div>
-              <div>
-                <dt>Stack</dt>
-                <dd>{(project.technologies ?? []).slice(0, 3).join(', ') || '—'}</dd>
-              </div>
-            </dl>
-
-            <div className="prose">
-              {paragraphs(project.description || project.summary).map((part, index) => (
-                <p key={index}>{part}</p>
-              ))}
-            </div>
-
-            {caseStudy ? (
-              <div style={{ marginTop: '2.5rem' }}>
-                <Eyebrow>Case study</Eyebrow>
-                <h2 className="display-2">{caseStudy.title}</h2>
-                {caseStudy.subtitle ? <p className="lede">{caseStudy.subtitle}</p> : null}
-
-                {caseStudy.metrics?.length ? (
-                  <div className="hero-stats">
-                    {caseStudy.metrics.map((metric) => (
-                      <div className="metric" key={metric.label}>
-                        <span className="metric-value">{metric.value}</span>
-                        <span className="metric-label">{metric.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-
-                <div className="prose" style={{ marginTop: '2rem' }}>
-                  {caseStudy.problem ? (
-                    <>
-                      <h2>The problem</h2>
-                      {paragraphs(caseStudy.problem).map((part, index) => (
-                        <p key={`p-${index}`}>{part}</p>
-                      ))}
-                    </>
-                  ) : null}
-                  {caseStudy.approach ? (
-                    <>
-                      <h2>The approach</h2>
-                      {paragraphs(caseStudy.approach).map((part, index) => (
-                        <p key={`a-${index}`}>{part}</p>
-                      ))}
-                    </>
-                  ) : null}
-                  {caseStudy.outcome ? (
-                    <>
-                      <h2>The outcome</h2>
-                      {paragraphs(caseStudy.outcome).map((part, index) => (
-                        <p key={`o-${index}`}>{part}</p>
-                      ))}
-                    </>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-
-            {project.gallery?.length > 1 ? (
-              <div className="gallery">
-                {project.gallery.slice(1).map((image) => (
-                  <img key={image} src={image} alt={`${project.title} detail`} loading="lazy" />
-                ))}
-              </div>
-            ) : null}
-          </div>
-
-          <aside className="detail-aside">
-            <div className="surface" style={{ padding: '1.4rem' }}>
-              <Eyebrow>Technologies</Eyebrow>
-              <div className="tag-row" style={{ marginTop: '0.8rem' }}>
+      <article>
+        <header className="case-hero">
+          <div className="shell">
+            <Reveal>
+              <Eyebrow>
+                {project.category} · {project.year || 'Recent'}
+              </Eyebrow>
+              <h1 className="display-1">{project.title}</h1>
+              {project.subtitle ? <p className="lede lede--wide">{project.subtitle}</p> : null}
+              <div className="tag-row">
                 {(project.technologies ?? []).map((tech) => (
                   <Tag key={tech}>{tech}</Tag>
                 ))}
               </div>
-            </div>
-            {project.seo_description ? (
-              <div className="surface" style={{ padding: '1.4rem' }}>
-                <Eyebrow>In one line</Eyebrow>
-                <p className="project-summary" style={{ marginTop: '0.6rem' }}>
-                  {project.seo_description}
-                </p>
-              </div>
-            ) : null}
-            <div className="surface" style={{ padding: '1.4rem' }}>
-              <Eyebrow>Interested?</Eyebrow>
-              <p className="project-summary" style={{ marginTop: '0.6rem' }}>
-                Similar problems are welcome — start with a short brief.
-              </p>
-              <div style={{ marginTop: '0.9rem' }}>
-                <Button to="/contact" variant="outline">
-                  Start a project
+              <div className="cta-actions">
+                {project.live_url ? (
+                  <Button href={project.live_url} icon={<ArrowUpRight size={16} aria-hidden />}>
+                    Live demo
+                  </Button>
+                ) : null}
+                {project.github_url ? (
+                  <Button href={project.github_url} variant="outline" icon={<Github size={15} aria-hidden />}>
+                    Source
+                  </Button>
+                ) : null}
+                <Button to="/work" variant="quiet">
+                  All projects
                 </Button>
               </div>
+            </Reveal>
+          </div>
+        </header>
+
+        <div className="shell detail-layout">
+          <div className="detail-main">
+            {project.summary ? (
+              <section className="detail-block">
+                <h2 className="display-3">Overview</h2>
+                <p className="lede">{project.summary}</p>
+              </section>
+            ) : null}
+
+            {project.description ? (
+              <section className="detail-block">
+                <h2 className="display-3">What it does</h2>
+                {project.description.split('\n').filter(Boolean).map((paragraph) => (
+                  <p key={paragraph.slice(0, 40)}>{paragraph}</p>
+                ))}
+              </section>
+            ) : null}
+
+            {caseStudy?.problem ? (
+              <section className="detail-block">
+                <h2 className="display-3">The problem</h2>
+                <p>{caseStudy.problem}</p>
+              </section>
+            ) : null}
+
+            {caseStudy?.approach ? (
+              <section className="detail-block">
+                <h2 className="display-3">The approach</h2>
+                <p>{caseStudy.approach}</p>
+              </section>
+            ) : null}
+
+            {caseStudy?.outcome ? (
+              <section className="detail-block">
+                <h2 className="display-3">The outcome</h2>
+                <p>{caseStudy.outcome}</p>
+              </section>
+            ) : null}
+
+            {(project.gallery ?? []).length ? (
+              <section className="detail-block">
+                <h2 className="display-3">Screens</h2>
+                <div className="gallery">
+                  {(project.gallery ?? []).map((src) => (
+                    <img key={src} src={src} alt={`${project.title} screen`} loading="lazy" />
+                  ))}
+                </div>
+              </section>
+            ) : null}
+          </div>
+
+          <aside className="detail-aside">
+            <div className="haircard">
+              <p className="eyebrow eyebrow--plain">Role</p>
+              <p>{project.role || 'Design and development'}</p>
             </div>
+            <div className="haircard">
+              <p className="eyebrow eyebrow--plain">Timeline</p>
+              <p>{project.duration || project.year || 'Ongoing'}</p>
+            </div>
+            <div className="haircard">
+              <p className="eyebrow eyebrow--plain">Stack</p>
+              <p>{(project.technologies ?? []).join(' · ') || '—'}</p>
+            </div>
+            {caseStudy?.metrics?.length ? (
+              <div className="haircard">
+                <p className="eyebrow eyebrow--plain">Recorded facts</p>
+                <dl className="detail-meta">
+                  {caseStudy.metrics.map((metric) => (
+                    <div key={metric.label}>
+                      <dt>{metric.label}</dt>
+                      <dd>{metric.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            ) : null}
           </aside>
         </div>
+      </article>
 
-        {related.length > 0 ? (
-          <div style={{ marginTop: 'clamp(3rem, 6vw, 4.5rem)' }}>
-            <Eyebrow>More work</Eyebrow>
-            <div className="work-grid" style={{ marginTop: '1.2rem' }}>
-              {related.slice(0, 2).map((item, index) => (
-                <ProjectCard key={item.id} project={item} index={index} />
+      {(related ?? []).length ? (
+        <section className="section">
+          <div className="shell">
+            <h2 className="display-3">More work</h2>
+            <div className="grid-editorial">
+              {(related ?? []).map((item) => (
+                <Link key={item.id} to={`/work/${item.slug}`} className="haircard surface-hover">
+                  <span className="mono">{item.category}</span>
+                  <h3>{item.title}</h3>
+                  <p className="muted">{item.summary}</p>
+                </Link>
               ))}
             </div>
           </div>
-        ) : null}
-      </section>
+        </section>
+      ) : null}
     </>
   );
 }
 
+/* ── Case study index ──────────────────────────────────────────────── */
+
 export function CaseStudies() {
-  const { data, loading, error, reload } = useQuery<CaseStudy[]>('/case-studies');
+  const { data, loading, error } = useQuery<CaseStudy[]>('/case-studies');
 
   useDocumentMeta({
     title: 'Case Studies',
-    description: 'Detailed engineering case studies: the problem, the approach and the measured outcome.',
+    description: 'Engineering case studies: problem, approach and outcome for each project.',
   });
-
-  const studies = data ?? [];
 
   return (
     <>
       <PageHeader
         eyebrow="Case studies"
-        title="Decisions, documented."
-        lede="Every project is a set of trade-offs. These write-ups explain what the constraints were, what was chosen and what changed as a result."
+        title={
+          <>
+            Decisions, <span className="outline-text">not just screenshots.</span>
+          </>
+        }
+        lede="Written records of what each project needed, what I chose, and what changed as a result."
       />
-
-      <section className="shell" style={{ paddingBottom: 'clamp(3rem, 6vw, 5rem)' }}>
-        {loading ? (
-          <Skeleton lines={8} />
-        ) : error ? (
-          <ErrorState message={error} onRetry={reload} />
-        ) : studies.length === 0 ? (
-          <EmptyState
-            title="Case studies are being written"
-            description="The engineering write-ups for these projects are in progress. The project pages already contain the full build notes."
-            action={<Button to="/work">Browse projects</Button>}
-          />
-        ) : (
-          <div style={{ display: 'grid', gap: '1.5rem' }}>
-            {studies.map((study, index) => (
-              <Reveal key={study.id} delay={index * 60}>
-                <article className="surface haircard" style={{ padding: 'clamp(1.4rem, 3vw, 2.2rem)' }}>
-                  <div className="project-card-top">
-                    <Badge>{study.project_slug || 'Case study'}</Badge>
-                    <span className="project-index">{String(index + 1).padStart(2, '0')}</span>
-                  </div>
-                  <h2 className="project-title" style={{ marginTop: '0.8rem' }}>
-                    {study.title}
-                  </h2>
-                  {study.subtitle ? <p className="project-summary">{study.subtitle}</p> : null}
-                  <div className="prose" style={{ marginTop: '1rem' }}>
-                    {study.problem ? <p>{study.problem}</p> : null}
-                  </div>
-                  {study.metrics?.length ? (
-                    <div className="hero-stats">
-                      {study.metrics.map((metric) => (
-                        <div className="metric" key={metric.label}>
-                          <span className="metric-value">{metric.value}</span>
-                          <span className="metric-label">{metric.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-                  {study.project_slug ? (
-                    <div style={{ marginTop: '1rem' }}>
-                      <ArrowLink to={`/work/${study.project_slug}`}>Open the project</ArrowLink>
-                    </div>
-                  ) : null}
-                </article>
-              </Reveal>
-            ))}
-          </div>
-        )}
+      <section className="section">
+        <div className="shell">
+          {loading ? <Loading label="Loading case studies" /> : null}
+          {error ? <EmptyState title="Could not load case studies" body={error.message} /> : null}
+          {!loading && !error ? (
+            (data ?? []).length ? (
+              <div className="grid-editorial">
+                {(data ?? []).map((study) => (
+                  <Reveal as="article" key={study.id}>
+                    <Link to={`/work/${study.project_slug}`} className="haircard surface-hover">
+                      <span className="mono">{study.project_slug}</span>
+                      <h2>{study.title}</h2>
+                      <p className="muted">{study.subtitle}</p>
+                      <span className="arrow-link">
+                        Read <ArrowUpRight size={15} aria-hidden />
+                      </span>
+                    </Link>
+                  </Reveal>
+                ))}
+              </div>
+            ) : (
+              <EmptyState title="No case studies yet" body="Case studies are published from the studio." />
+            )
+          ) : null}
+        </div>
       </section>
     </>
   );
