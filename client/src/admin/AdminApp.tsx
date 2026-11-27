@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { api, ApiClientError } from '../lib/api';
 import { useQuery } from '../lib/hooks';
+import './admin.css';
 import { AuthProvider, useAuth } from './AuthContext';
 import { RealtimeProvider, useRealtime } from './RealtimeContext';
 import Overview from './Overview';
