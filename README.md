@@ -10,19 +10,52 @@ wired to a real database through a real Express server. Nothing is mocked.
 
 ---
 
+## OMEGA layer (3D / WebGL / GLSL)
+
+The public experience is built on a hand-written Three.js layer rather than an off-the-shelf
+scene kit. Everything below is custom geometry and shader code in `client/src/three/`.
+
+| Module | What it does |
+| --- | --- |
+| `three/engine.ts` | Scene lifecycle: mount, resize, render loop, raycast picking, disposal, `prefersReducedMotion`, WebGL capability probe and `probeShader()` for real GLSL compile status |
+| `three/heroSculpture.ts` | Hero installation — torus stack, independent orbital rings, procedural particle field, custom vertex-displacement + fresnel metallic shader, scroll-driven camera states |
+| `three/scenes.ts` | `createProjectUniverse()` (nine-node project graph, clickable) and `createTechConstellation()` (18 technology nodes) |
+| `components/SceneCanvas.tsx` | Lazy React host: IntersectionObserver pause off-screen, context loss recovery, and a static fallback if WebGL is unavailable |
+
+**Digital Lab (`/lab`)** — seven experiments, every control wired to real uniforms or scene
+graph rebuilds: Particle Dimension (density/speed/size), Liquid Metallic (distortion/lighting),
+Orbital Engine (rotation/structures/geometry), GLSL Playground (intensity/pattern/hue),
+3D Typography (material/lighting/camera), Motion Lab (timeline play/pause/rate) and CSS Depth
+Studio (depth/rotation/layers/presets, no WebGL required).
+
+**Performance** — `three` is split into its own lazy chunk (625 kB raw / 168 kB gzip) and only
+loads where a scene mounts. Scenes pause when off-screen, dispose geometries/materials on
+unmount, cut particle counts on mobile, and degrade to a styled static mark when WebGL or a
+shader fails. `prefers-reduced-motion` disables camera and idle animation.
+
+**Content** — `server/src/db/seedOmega.ts` inserts the nine owner-supplied projects per slug,
+so the previously verified projects (LotteryChain, TrustChain, this portfolio) and any admin
+edits are preserved across restarts.
+
+---
+
 ## What is inside
 
 ### Public site (`/`)
 | Route | Purpose |
 | --- | --- |
-| `/` | Animated hero, 3D scene, featured work, skills, services, timeline, CTA |
-| `/work` | Project listing with search, category filters and featured ordering |
-| `/work/:slug` | Project detail: gallery, stack, GitHub/live links, case-study body |
+| `/` | OMEGA hero (3D sculpture), statement, featured work, constellation, journey, CTA |
+| `/work` | Asymmetric nine-project gallery: filters + search, 3D project universe, keyboard list |
+| `/work/:slug` | Case study: overview, stack, gallery, GitHub/live links |
+| `/case-studies` | Long-form case study index |
 | `/about` | Profile, story, education, certifications, achievements |
+| `/skills`, `/experience`, `/services`, `/education`, `/achievements`, `/certifications` | Content pages backed by the database |
+| `/lab` | Digital Lab — seven interactive WebGL / GLSL / CSS experiments |
 | `/writing` | Blog index |
 | `/writing/:slug` | Article detail with metadata and structured data |
+| `/testimonials`, `/resume` | Testimonials and résumé |
 | `/contact` | Validated contact form persisted to the database |
-| `/privacy`, `/terms` | Legal pages |
+| `/legal/privacy`, `/legal/terms` | Legal pages |
 | `*` | Custom 404 |
 
 ### Admin console (`/admin`)
