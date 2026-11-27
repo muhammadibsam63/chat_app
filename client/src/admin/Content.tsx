@@ -22,7 +22,7 @@ interface FieldDef {
 type Row = Record<string, unknown>;
 
 const inputClass =
-  'w-full rounded-xl border border-white/10 bg-[#0b0f16] px-3 py-2 text-sm text-white placeholder:text-white/25 focus:border-[#f5c542]/60 focus:outline-none';
+  'w-full rounded-xl border border-white/10 bg-[#0b0b0b] px-3 py-2 text-sm text-white placeholder:text-white/25 focus:border-[#ffd600]/60 focus:outline-none';
 
 function toDraft(fields: FieldDef[], row: Row | null): Row {
   const draft: Row = {};
@@ -254,7 +254,12 @@ export default function ContentManager() {
       {(error || loadError) && <p className="admin-error">{error ?? loadError}</p>}
 
       {loading && rows.length === 0 ? (
-        <p className="admin-empty">Loading records…</p>
+        <div className="admin-skel-stack" aria-busy="true" aria-label="Loading records">
+          <div className="admin-skel admin-skel--line" />
+          <div className="admin-skel admin-skel--line" />
+          <div className="admin-skel admin-skel--line" />
+          <div className="admin-skel admin-skel--line" />
+        </div>
       ) : rows.length === 0 ? (
         <p className="admin-empty">No records found. Create the first one.</p>
       ) : (
