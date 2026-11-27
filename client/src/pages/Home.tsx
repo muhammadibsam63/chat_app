@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ArrowUpRight, Github, MapPin } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, MapPin } from 'lucide-react';
+import { GithubIcon } from '../components/BrandIcons';
 import { useDocumentMeta, useQuery } from '../lib/hooks';
 import { useSite } from '../lib/site';
 import type { Experience, Project, Service, Skill, Stats } from '../lib/types';
@@ -143,7 +144,7 @@ export default function Home() {
                         <ArrowLink to={`/work/${project.slug}`}>Case study</ArrowLink>
                         {project.github_url ? (
                           <a href={project.github_url} target="_blank" rel="noreferrer noopener">
-                            <Github size={14} aria-hidden /> Source
+                            <GithubIcon size={14} /> Source
                           </a>
                         ) : null}
                         {project.live_url ? (

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowUpRight, Github, Linkedin, Mail, Menu, Twitter, X } from 'lucide-react';
+import { ArrowUpRight, Mail, Menu, X } from 'lucide-react';
+import { GithubIcon, LinkedinIcon, XIcon } from './BrandIcons';
 import { useSite } from '../lib/site';
 import { cn } from './ui';
 
@@ -136,9 +137,9 @@ export function SiteFooter() {
   const { settings } = useSite();
   const year = new Date().getFullYear();
   const socials = [
-    { href: settings.socials.github, label: 'GitHub', Icon: Github },
-    { href: settings.socials.linkedin, label: 'LinkedIn', Icon: Linkedin },
-    { href: settings.socials.x, label: 'X', Icon: Twitter },
+    { href: settings.socials.github, label: 'GitHub', Icon: GithubIcon },
+    { href: settings.socials.linkedin, label: 'LinkedIn', Icon: LinkedinIcon },
+    { href: settings.socials.x, label: 'X', Icon: XIcon },
     { href: `mailto:${settings.profile.email}`, label: 'Email', Icon: Mail },
   ].filter((item) => Boolean(item.href));
 

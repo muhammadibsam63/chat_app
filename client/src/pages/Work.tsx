@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowUpRight, Github } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight } from 'lucide-react';
+import { GithubIcon } from '../components/BrandIcons';
 import { queryString } from '../lib/api';
 import { useDocumentMeta, useQuery } from '../lib/hooks';
 import { useSite } from '../lib/site';
@@ -220,7 +221,7 @@ export function ProjectDetail() {
             ) : null}
             {project.github_url ? (
               <Button href={project.github_url} variant="outline">
-                <Github size={15} aria-hidden /> Source code
+                <GithubIcon size={15} /> Source code
               </Button>
             ) : null}
           </div>
