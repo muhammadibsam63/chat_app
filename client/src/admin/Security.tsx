@@ -233,15 +233,15 @@ export default function SecurityPanel() {
                     </select>
                   </td>
                   <td>
-                    <span className={`admin-tag ${account.isActive ? 'admin-tag--read' : 'admin-tag--archived'}`}>
-                      {account.isActive ? 'active' : 'disabled'}
+                    <span className={`admin-tag ${account.is_active ? 'admin-tag--read' : 'admin-tag--archived'}`}>
+                      {account.is_active ? 'active' : 'disabled'}
                     </span>
                   </td>
                   <td className="admin-row-actions">
                     <button
                       type="button"
-                      onClick={() => void patchUser(account.id, { isActive: !account.isActive })}
-                      aria-label={account.isActive ? 'Disable account' : 'Enable account'}
+                      onClick={() => void patchUser(account.id, { isActive: !account.is_active })}
+                      aria-label={account.is_active ? 'Disable account' : 'Enable account'}
                     >
                       <UserX size={14} />
                     </button>
