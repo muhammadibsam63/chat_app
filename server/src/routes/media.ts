@@ -175,7 +175,7 @@ settingsRouter.put(
   '/',
   requirePermission('settings:write'),
   asyncHandler((req, res) => {
-    const schema = z.record(z.union([z.record(z.any()), z.string(), z.number(), z.boolean()]));
+    const schema = z.record(z.string(), z.any());
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return fail(res, 422, 'Invalid settings payload', parsed.error.flatten().fieldErrors);
 
