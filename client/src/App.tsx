@@ -6,7 +6,8 @@ import { usePageView } from './lib/hooks';
 import Home from './pages/Home';
 import { CaseStudies, ProjectDetail, ProjectList } from './pages/Work';
 import { About, Achievements, Certifications, Education, Experience, Resume, Services, Skills } from './pages/Profile';
-import { Blog, BlogDetail, Lab, Testimonials } from './pages/Writing';
+import { Blog, BlogDetail, Testimonials } from './pages/Writing';
+import Lab from './pages/Lab';
 import Contact from './pages/Contact';
 import { NotFound, Privacy, Terms } from './pages/Legal';
 

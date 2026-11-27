@@ -17,6 +17,8 @@ type SceneCanvasProps = {
   label: string;
   fallback?: ReactNode;
   cameraFov?: number;
+  /** Receives the controller so pages can sync a 3D highlight from an accessible list. */
+  onReady?: (controller: SceneController) => void;
 };
 
 /**
@@ -31,6 +33,7 @@ export default function SceneCanvas({
   label,
   fallback,
   cameraFov,
+  onReady,
 }: SceneCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
@@ -58,6 +61,7 @@ export default function SceneCanvas({
 
     controllerRef.current = controller;
     if (!controller.supported) setSupported(false);
+    onReady?.(controller);
 
     return () => {
       controller.dispose();
