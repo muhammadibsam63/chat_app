@@ -160,8 +160,8 @@ export default function Home() {
 
           {loadingWork ? (
             <div className="skeleton-stack">
-              <Skeleton height={180} />
-              <Skeleton height={180} />
+              <Skeleton lines={4} />
+              <Skeleton lines={4} />
             </div>
           ) : showcase.length ? (
             <div className="work-editorial">

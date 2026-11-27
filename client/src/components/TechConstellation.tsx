@@ -45,8 +45,9 @@ export default function TechConstellation() {
           factory={factory}
           label="Three-dimensional constellation of technologies"
           onReady={setController}
-          onClick={(index) => {
-            if (index >= 0 && index < TECH_ENTRIES.length) setActiveIndex(index);
+          onClick={(object) => {
+            const index = Number(object.userData.index);
+            if (Number.isInteger(index) && index >= 0 && index < TECH_ENTRIES.length) setActiveIndex(index);
           }}
           fallback={<div className="scene-fallback">Technology constellation</div>}
         />

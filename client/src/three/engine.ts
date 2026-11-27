@@ -77,11 +77,11 @@ export function probeShader(
   };
 
   const v = build(gl.VERTEX_SHADER, vertexSrc);
-  if (!v || 'error' in v) return { ok: false, log: v && 'error' in v ? v.error : 'vertex compile failed' };
+  if (!v || 'error' in v) return { ok: false, log: (v && 'error' in v ? v.error : undefined) ?? 'vertex compile failed' };
   const f = build(gl.FRAGMENT_SHADER, fragmentSrc);
   if (!f || 'error' in f) {
     gl.deleteShader(v.shader);
-    return { ok: false, log: f && 'error' in f ? f.error : 'fragment compile failed' };
+    return { ok: false, log: (f && 'error' in f ? f.error : undefined) ?? 'fragment compile failed' };
   }
   const program = gl.createProgram();
   if (!program) return { ok: false, log: 'program allocation failed' };

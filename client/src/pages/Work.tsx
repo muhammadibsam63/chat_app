@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowUpRight, Github, Radio } from 'lucide-react';
+import { ArrowUpRight, Radio } from 'lucide-react';
 import SceneCanvas from '../components/SceneCanvas';
 import { Badge, Button, EmptyState, Eyebrow, Loading, PageHeader, Reveal, Tag } from '../components/ui';
 import { useDocumentMeta, useQuery } from '../lib/hooks';
@@ -115,8 +115,9 @@ export function ProjectList() {
                 <SceneCanvas
                   factory={factory}
                   label="Interactive three-dimensional map of the nine projects"
-                  onClick={(index) => {
-                    const target = projects[index];
+                  onClick={(object) => {
+                    const slug = String(object.userData.slug ?? '');
+                    const target = projects.find((project) => project.slug === slug);
                     if (target) navigate(`/work/${target.slug}`);
                   }}
                   fallback={<div className="scene-fallback">Project universe</div>}
@@ -138,7 +139,7 @@ export function ProjectList() {
           ) : null}
 
           {loading ? <Loading label="Loading projects" /> : null}
-          {error ? <EmptyState title="Could not load projects" body={error.message} /> : null}
+          {error ? <EmptyState title="Could not load projects" description={error} /> : null}
 
           {!loading && !error ? (
             filtered.length ? (
@@ -181,7 +182,7 @@ export function ProjectList() {
             ) : (
               <EmptyState
                 title="No projects match that search"
-                body="Try a different technology or clear the filters to see everything."
+                description="Try a different technology or clear the filters to see everything."
               />
             )
           ) : null}
@@ -209,7 +210,7 @@ export function ProjectDetail() {
     return (
       <section className="section">
         <div className="shell">
-          <EmptyState title="Case study not found" body="This project may have been renamed or unpublished." />
+          <EmptyState title="Case study not found" description="This project may have been renamed or unpublished." />
           <Button to="/work" variant="outline">
             Back to all work
           </Button>
@@ -243,7 +244,7 @@ export function ProjectDetail() {
                   </Button>
                 ) : null}
                 {project.github_url ? (
-                  <Button href={project.github_url} variant="outline" icon={<Github size={15} aria-hidden />}>
+                  <Button href={project.github_url} variant="outline">
                     Source
                   </Button>
                 ) : null}
@@ -380,7 +381,7 @@ export function CaseStudies() {
       <section className="section">
         <div className="shell">
           {loading ? <Loading label="Loading case studies" /> : null}
-          {error ? <EmptyState title="Could not load case studies" body={error.message} /> : null}
+          {error ? <EmptyState title="Could not load case studies" description={error} /> : null}
           {!loading && !error ? (
             (data ?? []).length ? (
               <div className="grid-editorial">
@@ -398,7 +399,7 @@ export function CaseStudies() {
                 ))}
               </div>
             ) : (
-              <EmptyState title="No case studies yet" body="Case studies are published from the studio." />
+              <EmptyState title="No case studies yet" description="Case studies are published from the studio." />
             )
           ) : null}
         </div>
