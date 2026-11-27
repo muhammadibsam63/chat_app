@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { db } from './index';
+import { seedOmegaProjects } from './seedOmega';
 
 /**
  * Seeds the ecosystem with verified profile content only.
@@ -356,6 +357,7 @@ export function seedAll(): void {
     seedRolesAndPermissions();
     seedSettings();
     seedContent();
+    seedOmegaProjects();
   });
   transaction();
 }
