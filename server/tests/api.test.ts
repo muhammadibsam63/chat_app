@@ -251,3 +251,22 @@ describe('realtime', () => {
     adminSocket.close();
   });
 });
+
+/**
+ * Regression: a rejected CORS origin used to throw, which the error handler turned into
+ * HTTP 500. Because index.html loads its module scripts and stylesheets with `crossorigin`,
+ * every browser asset request carried an Origin header and the whole site failed to load.
+ */
+describe('cors hardening', () => {
+  it('serves requests carrying a foreign Origin instead of failing them', async () => {
+    const res = await request(server).get('/api/health').set('Origin', 'https://evil.example');
+    expect(res.status).toBe(200);
+    expect(res.headers['access-control-allow-origin']).toBeUndefined();
+  });
+
+  it('reflects its own origin so same-origin assets and API calls are allowed', async () => {
+    const res = await request(server).get('/api/health').set('Origin', baseUrl);
+    expect(res.status).toBe(200);
+    expect(res.headers['access-control-allow-origin']).toBe(baseUrl);
+  });
+});
