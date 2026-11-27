@@ -279,8 +279,9 @@ export interface AdminOverview {
 }
 
 export interface AnalyticsPayload {
-  totals: { views: number; views7d: number; views30d: number; uniqueVisitors: number };
-  daily: Array<{ date: string; views: number }>;
-  topPaths: Array<{ path: string; views: number }>;
-  referrers: Array<{ referrer: string; views: number }>;
+  days: number;
+  views: Array<{ day: string; total: number }>;
+  topPaths: Array<{ path: string; total: number }>;
+  messages: Array<{ day: string; total: number }>;
+  totals: { views: number; viewsWindow: number; messages: number; sessions: number };
 }

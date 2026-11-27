@@ -56,6 +56,25 @@ adminRouter.get(
       )
       .all();
 
+    const views7d = (
+      db
+        .prepare("SELECT COUNT(*) AS total FROM page_views WHERE created_at >= datetime('now', '-7 days')")
+        .get() as { total: number }
+    ).total;
+    const views30d = (
+      db
+        .prepare("SELECT COUNT(*) AS total FROM page_views WHERE created_at >= datetime('now', '-30 days')")
+        .get() as { total: number }
+    ).total;
+    const topPaths = db
+      .prepare(
+        `SELECT path, COUNT(*) AS views FROM page_views
+         WHERE created_at >= datetime('now', '-30 days')
+         GROUP BY path ORDER BY views DESC LIMIT 6`,
+      )
+      .all() as Array<{ path: string; views: number }>;
+    const storage = storageUsage();
+
     return ok(res, {
       counts: {
         projects: count('projects'),
@@ -70,19 +89,25 @@ adminRouter.get(
         sessions: count('sessions', "expires_at > datetime('now')"),
       },
       messages,
+      recentMessages: messages,
       activity,
+      recentActivity: activity,
       notifications: db
         .prepare('SELECT * FROM notifications ORDER BY created_at DESC LIMIT 10')
         .all(),
       unreadNotifications: count('notifications', 'is_read = 0'),
       viewsByDay,
+      analytics: { views7d, views30d, topPaths },
+      storage: { bytes: storage.usedBytes, files: storage.files },
       presence: presenceSnapshot(),
       system: {
+        database: 'ok',
         environment: config.env,
+        version: String((config as unknown as { version?: string }).version ?? '1.0.0'),
         uptimeSeconds: Math.round(process.uptime()),
         nodeVersion: process.version,
         databaseSizeBytes: fs.existsSync(config.dbFile) ? fs.statSync(config.dbFile).size : 0,
-        storage: storageUsage(),
+        storage,
       },
     });
   }),
