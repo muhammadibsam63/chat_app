@@ -11,6 +11,13 @@ import { db } from './index';
  * Copy policy: descriptions state the domain and scope implied by each project
  * name only. No metrics, clients, awards or certifications are claimed here —
  * those stay empty until Muhammad authors them in the admin studio.
+ *
+ * Audit note: the repository contains no live_url/github_url for these nine
+ * projects, so their functionality could not be inspected against a running
+ * build. Copy therefore describes the project's domain and declared stack only;
+ * implementation claims ("cart wired to real state", "authenticated app area",
+ * "booking flow") were removed during the final audit because they could not be
+ * verified. Links stay empty until the owner supplies them in the studio.
  */
 type Row = {
   slug: string;
@@ -29,7 +36,7 @@ const PROJECTS: Row[] = [
     title: 'HCM Lite',
     subtitle: 'Human capital management, stripped to what teams actually use',
     summary:
-      'A lightweight human capital management interface: employee records, leave requests and attendance in one place, without the weight of an enterprise suite.',
+      'A human capital management front end: a compact workspace for people records, leave and attendance, built without the weight of an enterprise suite.',
     category: 'Full-Stack',
     technologies: ['React', 'Node.js', 'REST APIs'],
     featured: true,
@@ -40,7 +47,7 @@ const PROJECTS: Row[] = [
     title: 'SkillForge Pro',
     subtitle: 'A structured environment for tracking skill development',
     summary:
-      'A learning workspace that organises skills, progress and practice into a single structured view instead of scattered notes and bookmarks.',
+      'A learning workspace that organises skills, progress and practice into one structured view instead of scattered notes and bookmarks.',
     category: 'Full-Stack',
     technologies: ['React', 'JavaScript', 'Firebase'],
     role: 'Full-stack development',
@@ -50,7 +57,7 @@ const PROJECTS: Row[] = [
     title: 'AeroTrip',
     subtitle: 'A travel planning interface built around clarity',
     summary:
-      'A travel planning front end focused on readable itineraries, destination browsing and a booking flow that stays legible at every step.',
+      'A travel planning front end: destination browsing and itinerary layouts composed to stay readable at every step.',
     category: 'Frontend',
     technologies: ['React', 'JavaScript', 'CSS3'],
     role: 'Frontend development',
@@ -60,7 +67,7 @@ const PROJECTS: Row[] = [
     title: '3D React Game',
     subtitle: 'Browser game built with React and WebGL',
     summary:
-      'An interactive browser game rendering a three-dimensional scene with React and Three.js, exploring controls, camera behaviour and real-time frame budgets.',
+      'An interactive browser game rendering a three-dimensional scene with React and Three.js, with attention to controls, camera behaviour and frame budget.',
     category: '3D / Interactive',
     technologies: ['React', 'Three.js', 'JavaScript'],
     featured: true,
@@ -71,7 +78,7 @@ const PROJECTS: Row[] = [
     title: 'Luxury Stay Hostel',
     subtitle: 'Hospitality site for a premium hostel',
     summary:
-      'A hospitality presentation site for a premium hostel: rooms, amenities and enquiry flow, art-directed around a calm, editorial layout.',
+      'A hospitality presentation site for a premium hostel: rooms and amenities art-directed around a calm, editorial layout.',
     category: 'Frontend',
     technologies: ['Next.js', 'CSS3', 'JavaScript'],
     role: 'Frontend development',
@@ -81,7 +88,7 @@ const PROJECTS: Row[] = [
     title: 'Luxora Watches',
     subtitle: 'Product-forward storefront for a watch label',
     summary:
-      'A storefront concept for a watch label, built around product photography, restrained typography and a direct path from browsing to cart.',
+      'A storefront concept for a watch label: product-led composition, restrained typography and a straightforward browse-to-cart path.',
     category: 'E-Commerce',
     technologies: ['React', 'JavaScript', 'CSS3'],
     featured: true,
@@ -92,7 +99,7 @@ const PROJECTS: Row[] = [
     title: 'Nova Store',
     subtitle: 'General commerce storefront',
     summary:
-      'A general-purpose commerce front end with catalogue browsing, category navigation and a cart flow wired to real state rather than static markup.',
+      'A general-purpose commerce front end with catalogue browsing, category navigation and a cart flow.',
     category: 'E-Commerce',
     technologies: ['React', 'REST APIs', 'JavaScript'],
     role: 'Full-stack development',
@@ -102,7 +109,7 @@ const PROJECTS: Row[] = [
     title: 'Nexora',
     subtitle: 'Product platform with an application layer',
     summary:
-      'A platform-style application combining a marketing surface with an authenticated application area, built to keep public and private concerns separated.',
+      'A platform-style product site: marketing surface and product detail composed as one consistent system.',
     category: 'Full-Stack',
     technologies: ['Next.js', 'Node.js', 'REST APIs'],
     role: 'Full-stack development',
