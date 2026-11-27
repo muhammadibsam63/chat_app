@@ -118,8 +118,8 @@ adminRouter.get(
 adminRouter.post(
   '/notifications/:id/read',
   asyncHandler((req, res) => {
-    db.prepare('UPDATE notifications SET read = 1 WHERE id = ?').run(req.params.id);
-    return ok(res, { id: req.params.id, read: true });
+    db.prepare('UPDATE notifications SET read = 1 WHERE id = ?').run(String(req.params.id));
+    return ok(res, { id: String(req.params.id), read: true });
   }),
 );
 
@@ -270,7 +270,7 @@ adminRouter.patch(
       })
       .safeParse(req.body);
     if (!parsed.success) return fail(res, 422, 'Invalid user payload', parsed.error.issues);
-    const target = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id) as
+    const target = db.prepare('SELECT * FROM users WHERE id = ?').get(String(req.params.id)) as
       | { id: string; role: string }
       | undefined;
     if (!target) return fail(res, 404, 'User not found');
@@ -310,10 +310,10 @@ adminRouter.delete(
   '/users/:id',
   asyncHandler((req, res) => {
     assertPermission(req, 'settings:write');
-    if (req.params.id === req.user!.id) return fail(res, 422, 'You cannot delete your own account');
-    const result = db.prepare('DELETE FROM users WHERE id = ?').run(req.params.id);
+    if (String(req.params.id) === req.user!.id) return fail(res, 422, 'You cannot delete your own account');
+    const result = db.prepare('DELETE FROM users WHERE id = ?').run(String(req.params.id));
     if (result.changes === 0) return fail(res, 404, 'User not found');
-    logActivity({ req, action: 'user.deleted', entity: 'user', entityId: req.params.id });
+    logActivity({ req, action: 'user.deleted', entity: 'user', entityId: String(req.params.id) });
     return ok(res, { deleted: true });
   }),
 );
@@ -328,7 +328,7 @@ function listPermission(resource: ResourceDef): string {
 adminRouter.get(
   '/content/:resource',
   asyncHandler((req, res) => {
-    const resource = requireResource(req.params.resource);
+    const resource = requireResource(String(req.params.resource));
     assertPermission(req, listPermission(resource));
 
     const { page, limit, offset } = parsePagination(req, { page: 1, limit: 25, maxLimit: 200 });
@@ -373,9 +373,9 @@ adminRouter.get(
 adminRouter.get(
   '/content/:resource/:id',
   asyncHandler((req, res) => {
-    const resource = requireResource(req.params.resource);
+    const resource = requireResource(String(req.params.resource));
     assertPermission(req, listPermission(resource));
-    const row = db.prepare(`SELECT * FROM ${resource.table} WHERE id = ?`).get(req.params.id) as
+    const row = db.prepare(`SELECT * FROM ${resource.table} WHERE id = ?`).get(String(req.params.id)) as
       | Record<string, unknown>
       | undefined;
     if (!row) return fail(res, 404, `${resource.singular} not found`);
@@ -388,7 +388,7 @@ adminRouter.get(
 adminRouter.post(
   '/content/:resource',
   asyncHandler((req, res) => {
-    const resource = requireResource(req.params.resource);
+    const resource = requireResource(String(req.params.resource));
     assertPermission(req, resource.permission);
 
     const { values, errors } = validatePayload(resource, req.body ?? {}, { partial: false });
@@ -422,10 +422,10 @@ adminRouter.post(
 adminRouter.patch(
   '/content/:resource/:id',
   asyncHandler((req, res) => {
-    const resource = requireResource(req.params.resource);
+    const resource = requireResource(String(req.params.resource));
     assertPermission(req, resource.permission);
 
-    const existing = db.prepare(`SELECT * FROM ${resource.table} WHERE id = ?`).get(req.params.id) as
+    const existing = db.prepare(`SELECT * FROM ${resource.table} WHERE id = ?`).get(String(req.params.id)) as
       | Record<string, unknown>
       | undefined;
     if (!existing) return fail(res, 404, `${resource.singular} not found`);
@@ -479,12 +479,12 @@ adminRouter.patch(
 adminRouter.delete(
   '/content/:resource/:id',
   asyncHandler((req, res) => {
-    const resource = requireResource(req.params.resource);
+    const resource = requireResource(String(req.params.resource));
     assertPermission(req, resource.permission);
-    const result = db.prepare(`DELETE FROM ${resource.table} WHERE id = ?`).run(req.params.id);
+    const result = db.prepare(`DELETE FROM ${resource.table} WHERE id = ?`).run(String(req.params.id));
     if (result.changes === 0) return fail(res, 404, `${resource.singular} not found`);
-    logActivity({ req, action: `${resource.table}.deleted`, entity: resource.table, entityId: req.params.id });
-    emitToAdmins(`${eventPrefix(resource)}:deleted`, { id: req.params.id });
+    logActivity({ req, action: `${resource.table}.deleted`, entity: resource.table, entityId: String(req.params.id) });
+    emitToAdmins(`${eventPrefix(resource)}:deleted`, { id: String(req.params.id) });
     return ok(res, { deleted: true });
   }),
 );
