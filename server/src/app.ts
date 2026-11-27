@@ -36,15 +36,23 @@ export function createApp() {
   );
 
   const allowlist = config.corsOrigins.length > 0 ? config.corsOrigins : [config.publicUrl];
+  // A rejected origin must never throw: the error handler would answer 500 and break
+  // same-origin module scripts and stylesheets, which always send an Origin header
+  // (index.html loads them with crossorigin). Reject by omitting the CORS headers, and
+  // always allow the origin the request was actually served from, so the deployed host
+  // works even when PUBLIC_URL is not configured.
   app.use(
-    cors({
-      origin: (origin, callback) => {
-        if (!origin || allowlist.includes(origin)) return callback(null, true);
-        return callback(new Error('Origin not allowed by CORS'));
-      },
-      credentials: true,
-      methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'X-CSRF-Token'],
+    cors((req, callback) => {
+      const origin = req.headers.origin;
+      const host = req.headers.host;
+      const selfOrigin = host ? `${req.protocol}://${host}` : '';
+      const allowed = !origin || origin === selfOrigin || allowlist.includes(origin);
+      callback(null, {
+        origin: allowed && origin ? origin : false,
+        credentials: true,
+        methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'X-CSRF-Token'],
+      });
     }),
   );
 
