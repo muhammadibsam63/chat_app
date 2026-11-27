@@ -178,6 +178,63 @@ Full instructions, CI notes and backup/restore procedure: **[docs/DEPLOYMENT.md]
 
 ---
 
+## Where data is stored (and what survives a deploy)
+
+This is a **single-process Node application with an embedded SQLite database**. There is no
+separate database server, no external cache and no third-party storage provider.
+
+| Data | Location | Written by |
+| --- | --- | --- |
+| Projects, skills, experience, education, certifications, testimonials, blog posts, services, site settings | `$DATA_DIR/ibsam.db` | `server/src/routes/admin.ts` CRUD |
+| Contact messages | `$DATA_DIR/ibsam.db` (`contact_messages`) | `POST /api/contact` |
+| Admin accounts, roles, permissions, sessions | `$DATA_DIR/ibsam.db` (`users`, `sessions`, `roles`, `permissions`) | `server/src/routes/auth.ts` |
+| Page views (analytics) | `$DATA_DIR/ibsam.db` (`page_views`) | `POST /api/analytics/pageview` |
+| Uploaded media, resume files | `$DATA_DIR/uploads/` on disk | `server/src/routes/media.ts` (multer disk storage) |
+| Activity log / audit trail | `$DATA_DIR/ibsam.db` (`activity_logs`) | every privileged mutation |
+
+Resolution order (`server/src/config.ts`):
+
+```
+DATA_DIR       default ./data          → creates ./data and ./data/uploads at boot
+DATABASE_FILE  default $DATA_DIR/ibsam.db
+```
+
+### The important limitation
+
+The container filesystem is **not durable**. On this hosting plan there is no persistent disk,
+so `/app/data` (and therefore the database and every upload) is recreated on each deploy or
+restart. What that means in practice:
+
+- **Seeded content returns automatically.** `server/src/db/seed.ts` and `seedOmega.ts` are
+  idempotent and re-run at boot, so the nine projects and the base content reappear.
+- **Admin-authored changes do not.** Edits made in the studio, uploaded images, contact messages
+  and analytics history live only inside the running container and are lost when it is replaced.
+
+### Making it durable (requires a paid plan)
+
+Persistent disks are not part of the Free plan. To keep real content, attach a persistent disk
+(Starter $5/month or Pro) and mount it at `/app/data`, then deploy with:
+
+```
+DATA_DIR=/app/data
+```
+
+That single variable redirects both the SQLite file and the upload directory onto durable
+storage — no code change is required. Until a disk is attached, treat the deployed site as a
+**content preview**: author the real content once persistence is in place.
+
+### Administrator bootstrap
+
+No admin account is created automatically and no credentials are hardcoded. Create the first
+account in one of two ways:
+
+```bash
+# one-time CLI (reads ADMIN_EMAIL / ADMIN_PASSWORD from the environment)
+npm run seed:admin
+```
+
+…or open `/admin` while no account exists — the console shows a one-time bootstrap screen.
+
 ## Repository layout
 
 ```
