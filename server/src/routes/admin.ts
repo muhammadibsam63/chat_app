@@ -400,7 +400,11 @@ adminRouter.post(
     if (resource.slugFrom && columns.includes('slug')) {
       payload.slug = uniqueSlug(resource, String(payload.slug ?? ''));
     }
-    const keys = Object.keys(payload).filter((key) => columns.includes(key));
+    // Unset optional fields arrive as null; omit them so column defaults
+    // (category, technologies, sort_order, published…) actually apply.
+    const keys = Object.keys(payload).filter(
+      (key) => columns.includes(key) && payload[key] !== null && payload[key] !== undefined,
+    );
     const sql = `INSERT INTO ${resource.table} (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`;
     try {
       db.prepare(sql).run(...keys.map((key) => payload[key] as never));
