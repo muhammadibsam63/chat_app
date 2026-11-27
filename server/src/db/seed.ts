@@ -79,17 +79,22 @@ export function seedRolesAndPermissions(): void {
   const insertRole = db.prepare('INSERT OR IGNORE INTO roles (name, label) VALUES (?, ?)');
   insertRole.run('ADMIN', 'Administrator');
   insertRole.run('EDITOR', 'Editor');
+  insertRole.run('VIEWER', 'Viewer (read-only)');
   const insertPermission = db.prepare('INSERT OR IGNORE INTO permissions (key, description) VALUES (?, ?)');
   for (const [key, description] of PERMISSIONS) insertPermission.run(key, description);
 
   const adminRole = db.prepare('SELECT id FROM roles WHERE name = ?').get('ADMIN') as { id: number };
   const editorRole = db.prepare('SELECT id FROM roles WHERE name = ?').get('EDITOR') as { id: number };
+  const viewerRole = db.prepare('SELECT id FROM roles WHERE name = ?').get('VIEWER') as { id: number };
   const link = db.prepare(
     'INSERT OR IGNORE INTO role_permissions (role_id, permission_id) SELECT ?, id FROM permissions WHERE key = ?',
   );
   for (const [key] of PERMISSIONS) link.run(adminRole.id, key);
   for (const key of ['dashboard:read', 'projects:write', 'content:write', 'messages:read', 'media:write', 'analytics:read']) {
     link.run(editorRole.id, key);
+  }
+  for (const key of ['dashboard:read', 'messages:read', 'analytics:read']) {
+    link.run(viewerRole.id, key);
   }
 }
 
