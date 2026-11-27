@@ -238,8 +238,8 @@ function AdminShell() {
   const { user, logout } = useAuth();
   const { connected, pulse } = useRealtime();
   const [open, setOpen] = useState(false);
-  const notifications = useQuery<Array<{ read: boolean }>>('/admin/notifications', [pulse]);
-  const unread = (notifications.data ?? []).filter((item) => !item.read).length;
+  const notifications = useQuery<Array<{ is_read: number }>>('/admin/notifications', [pulse]);
+  const unread = (notifications.data ?? []).filter((item) => !item.is_read).length;
 
   useEffect(() => {
     setOpen(false);
