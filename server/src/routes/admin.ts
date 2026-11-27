@@ -74,7 +74,7 @@ adminRouter.get(
       notifications: db
         .prepare('SELECT * FROM notifications ORDER BY created_at DESC LIMIT 10')
         .all(),
-      unreadNotifications: count('notifications', 'read = 0'),
+      unreadNotifications: count('notifications', 'is_read = 0'),
       viewsByDay,
       presence: presenceSnapshot(),
       system: {
@@ -104,13 +104,13 @@ adminRouter.get(
     const unreadOnly = String(req.query.unread ?? '') === 'true';
     const rows = db
       .prepare(
-        `SELECT * FROM notifications ${unreadOnly ? 'WHERE read = 0' : ''} ORDER BY created_at DESC LIMIT 50`,
+        `SELECT * FROM notifications ${unreadOnly ? 'WHERE is_read = 0' : ''} ORDER BY created_at DESC LIMIT 50`,
       )
       .all() as Record<string, unknown>[];
     return ok(
       res,
       rows.map((row) => normaliseRow(row, [], ['read'])),
-      { unread: count('notifications', 'read = 0') },
+      { unread: count('notifications', 'is_read = 0') },
     );
   }),
 );
@@ -118,7 +118,7 @@ adminRouter.get(
 adminRouter.post(
   '/notifications/:id/read',
   asyncHandler((req, res) => {
-    db.prepare('UPDATE notifications SET read = 1 WHERE id = ?').run(String(req.params.id));
+    db.prepare('UPDATE notifications SET is_read = 1 WHERE id = ?').run(String(req.params.id));
     return ok(res, { id: String(req.params.id), read: true });
   }),
 );
@@ -126,7 +126,7 @@ adminRouter.post(
 adminRouter.post(
   '/notifications/read-all',
   asyncHandler((_req, res) => {
-    const result = db.prepare('UPDATE notifications SET read = 1 WHERE read = 0').run();
+    const result = db.prepare('UPDATE notifications SET is_read = 1 WHERE is_read = 0').run();
     return ok(res, { updated: result.changes });
   }),
 );
